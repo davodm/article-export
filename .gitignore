@@ -1,0 +1,20 @@
+node_modules
+node_modules/*
+.vercel
+.vercel/*
+*.env
+.env.local
+vercel.json
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+coverage
+.nyc_output
+.serverless
+package-lock.json
