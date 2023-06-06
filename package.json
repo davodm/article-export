@@ -1,0 +1,17 @@
+{
+  "name": "article-export",
+  "version": "0.0.1",
+  "description": "Simply export article data from an URL",
+  "main": "api/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Davod Mozafari",
+  "license": "MIT",
+  "dependencies": {
+    "@extractus/article-extractor": "^7.2.16",
+    "@upstash/redis": "^1.21.0",
+    "humanoid-js": "^1.0.1"
+  }
+}
