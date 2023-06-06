@@ -1,7 +1,7 @@
 {
   "name": "article-export",
   "version": "0.0.1",
-  "description": "Simply export article data from an URL",
+  "description": "Simple serverless app to export article data from an URL with ability to bypass cloudflare ani-bot measures",
   "main": "api/index.js",
   "type": "module",
   "scripts": {
