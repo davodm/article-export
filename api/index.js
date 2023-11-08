@@ -40,7 +40,7 @@ export default async function handler(request, response) {
     //There is no cache, fetch the URL
     if (article === null) {
       //Fetch with humanoid
-      const hmo = new Humanoid();
+      const hmo = new Humanoid(true,0);
       const req = await hmo.get(request.body.url);
       //Parse Article
       article = await extractFromHtml(req.body, request.body.url, {
@@ -66,6 +66,7 @@ export default async function handler(request, response) {
       article: article,
     });
   } catch (err) {
+    console.error(err);
     return response.status(500).json({
       status: -1,
       error: err.message,
