@@ -14,53 +14,59 @@ function sha1(data) {
 
 /**
  * Serverless function to provide parsed article of an URL
- * @param {*} request 
- * @param {*} response 
+ * @param {*} request
+ * @param {*} response
  * @returns {String}
  */
 export default async function handler(request, response) {
   try {
-    //Check request body
+    // Check request body
     if (!request.body || !request?.body?.url || !request?.body?.key) {
       throw new Error("No body attributes received");
     }
-    //Check Secret Key
+    // Check Secret Key
     if (!process.env.SECRET_KEY.split(",").includes(request.body.key)) {
       throw new Error("Secret key is wrong");
     }
-    //Start Redis client
+    // Start Redis client
     const redis = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     });
-    //Hash of URL
+    // Hash of URL
     const hash = sha1(request.body.url);
-    //Get cache from redis
+    // Get cache from redis
     let article = await redis.hgetall(hash);
-    //There is no cache, fetch the URL
+    // There is no cache, fetch the URL
     if (article === null) {
-      //Fetch with humanoid
-      const hmo = new Humanoid(true,0);
+      // Fetch with humanoid
+      const hmo = new Humanoid(true, 0);
       const req = await hmo.get(request.body.url);
-      //Parse Article
+      // Check URL page is correct and accessible
+      if (![200, 201].includes(req.statusCode)) {
+        throw new Error(
+          `URL is not accessible with status code ${req.statusCode}`
+        );
+      }
+      // Parse Article
       article = await extractFromHtml(req.body, request.body.url, {
         headers: {
           "user-agent":
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
         },
       });
-      //Nothing to extract
+      // Nothing to extract
       if (article === null) {
         throw new Error("Can not extract article");
       }
-      //Set Cache by using pipeline since it's hmset
+      // Set Cache by using pipeline since it's hmset
       const p = redis.pipeline();
       await p
         .hmset(hash, article)
         .expire(hash, 3600 * 24 * parseInt(process.env.REDIS_CACHE_DAYS))
         .exec();
     }
-    //Response
+    // Response
     return response.status(200).json({
       status: 0,
       article: article,
