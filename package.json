@@ -10,8 +10,8 @@
   "author": "Davod Mozafari",
   "license": "MIT",
   "dependencies": {
-    "@extractus/article-extractor": "^7.2.16",
-    "@upstash/redis": "^1.21.0",
+    "@extractus/article-extractor": "^8.0.3",
+    "@upstash/redis": "^1.24.3",
     "humanoid-js": "^1.0.1"
   }
 }
