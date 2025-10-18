@@ -87,7 +87,7 @@ try {
       fs.readFileSync(join(__dirname, 'package.json'), 'utf8')
     )
   );
-  const requiredScripts = ['dev', 'deploy', 'deploy:staging', 'lint', 'format'];
+  const requiredScripts = ['deploy', 'deploy:staging', 'test', 'lint', 'format'];
 
   let allScriptsExist = true;
   for (const script of requiredScripts) {
@@ -140,9 +140,56 @@ if (majorVersion >= 18) {
   console.log(`   ❌ Node.js ${nodeVersion} is not compatible (requires >=18)`);
 }
 
+console.log('\n6️⃣  Validating fetcher module...');
+try {
+  const { fetchArticleContent, fetchWithStrategies } = await import(
+    './api/_lib/fetcher.js'
+  );
+  if (typeof fetchArticleContent === 'function') {
+    console.log('   ✅ fetchArticleContent exported correctly');
+  } else {
+    console.log('   ❌ fetchArticleContent not a function');
+  }
+  if (typeof fetchWithStrategies === 'function') {
+    console.log('   ✅ fetchWithStrategies exported correctly');
+  } else {
+    console.log('   ❌ fetchWithStrategies not a function');
+  }
+} catch (error) {
+  console.log('   ❌ Fetcher module error:', error.message);
+}
+
+console.log('\n7️⃣  Checking environment template...');
+try {
+  const fs = await import('fs');
+  const envExample = fs.readFileSync(join(__dirname, 'env.example'), 'utf8');
+  const requiredVars = [
+    'UPSTASH_REDIS_REST_TOKEN',
+    'UPSTASH_REDIS_REST_URL',
+    'SECRET_KEY',
+    'REDIS_CACHE_DAYS',
+  ];
+
+  let allVarsPresent = true;
+  for (const varName of requiredVars) {
+    if (envExample.includes(varName)) {
+      console.log(`   ✅ ${varName} in env.example`);
+    } else {
+      console.log(`   ❌ ${varName} missing from env.example`);
+      allVarsPresent = false;
+    }
+  }
+
+  if (!allVarsPresent) {
+    console.log('\n⚠️  Some environment variables missing from env.example');
+  }
+} catch (error) {
+  console.log('   ❌ Error checking env.example:', error.message);
+}
+
 console.log('\n🎉 Testing completed!');
 console.log('\n📋 Next steps:');
 console.log('   1. Set up your environment variables (see env.example)');
-console.log('   2. Run: npm run dev (for local testing)');
+console.log('   2. Run: vercel dev (for local testing)');
 console.log('   3. Run: npm test (to validate changes)');
-console.log('   4. Check DEPLOYMENT.md for deployment instructions');
+console.log('   4. Run: npm run deploy (for production deployment)');

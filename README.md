@@ -4,15 +4,36 @@ A high-performance, serverless Node.js application that extracts article data fr
 
 ## ✨ Features
 
-- **Anti-Bot Bypass**: Uses Humanoid-js to bypass Cloudflare and other anti-bot protections
-- **Smart Caching**: Redis-based caching system for improved performance and reduced API calls
-- **Content Extraction**: Extracts title, content, images, and metadata using article-extractor
-- **Serverless Architecture**: Optimized for Vercel with automatic scaling
-- **Security**: Secret key authentication system
-- **CORS Support**: Built-in CORS headers for cross-origin requests
-- **Error Handling**: Comprehensive error handling with production-safe error messages
-- **Performance Monitoring**: Built-in response time tracking
-- **Health Monitoring**: Built-in health check endpoint
+### 🚀 Core Functionality
+- **Dual Bypass Strategy**: Two-tier anti-bot bypass system
+  - Primary: `humanoid-js` for basic-medium Cloudflare protection
+  - Secondary: `impit` with browser fingerprint spoofing
+  - Automatic fallback if primary method fails
+- **Smart Caching**: Redis-based caching with configurable TTL (default: 10 days)
+- **Content Extraction**: Extracts title, content, images, author, published date, and metadata
+- **Quality Validation**: Automatic detection of cookie walls, paywalls, and invalid content
+- **Dual HTTP Methods**: Supports both GET and POST requests
+
+### 🔒 Security & Reliability
+- **Secret Key Authentication**: Multi-key support with comma-separated values
+- **Input Validation**: URL format validation and sanitization
+- **Redis Fallback**: Service continues without cache if Redis is unavailable
+- **Timeout Handling**: 25-second timeout prevents hanging requests
+- **Error Sanitization**: Production-safe error messages
+
+### 📊 Monitoring & Observability
+- **Strategy Reporting**: Shows which bypass method succeeded (`humanoid` or `impit`)
+- **Performance Tracking**: Response time measurement for every request
+- **Content Validation**: Reports on article quality and detected blockers
+- **Health Endpoint**: Service health and Redis connectivity monitoring
+- **Cache Status**: Indicates if content was served from cache or freshly fetched
+
+### 🌐 Developer Experience
+- **CORS Support**: Cross-origin requests enabled for all methods
+- **RESTful API**: Clean, consistent JSON responses
+- **Comprehensive Testing**: 7 automated checks for project integrity
+- **Modern Tooling**: ESLint v9, Prettier, ES2022 features
+- **Serverless Ready**: Optimized for Vercel free tier (<50MB)
 
 ## 🚀 Quick Start
 
@@ -55,16 +76,16 @@ A high-performance, serverless Node.js application that extracts article data fr
 
 5. **Start local development**
    ```bash
-   npm run dev
+   vercel dev
    ```
 
 ## 📡 API Usage
 
 ### Endpoints
 
-#### Main API: `POST /api`
+#### Main API: `GET /api` or `POST /api`
 
-Extracts article content from a given URL.
+Extracts article content from a given URL. Supports both GET and POST methods.
 
 #### Health Check: `GET /api/health`
 
@@ -72,7 +93,15 @@ Monitors service health and Redis connection status.
 
 ### Request Format
 
-**Main API Request:**
+The API supports both GET and POST methods with the same parameters:
+
+**GET Request (Query Parameters):**
+
+```bash
+GET /api?key=your_secret_key&url=https://example.com/article
+```
+
+**POST Request (JSON Body):**
 
 ```json
 {
@@ -96,10 +125,37 @@ Monitors service health and Redis connection status.
     "publishedTime": "2024-01-01T00:00:00.000Z"
   },
   "cached": false,
+  "strategy": "humanoid",
+  "validation": {
+    "isValid": true,
+    "hasBlocker": false,
+    "issues": [],
+    "quality": {
+      "hasValidTitle": true,
+      "hasValidContent": true,
+      "hasValidDescription": true,
+      "contentLength": 2540
+    }
+  },
   "processingTime": "1250ms",
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+**Response Fields:**
+- `status`: `0` for success, `-1` for error
+- `article`: Extracted article data (title, content, author, etc.)
+- `cached`: `true` if served from cache, `false` if freshly fetched
+- `strategy`: Which fetch method was used (`"humanoid"` or `"impit"`), `null` if from cache
+- `validation`: Content quality and blocker detection (see below)
+- `processingTime`: Total processing time in milliseconds
+- `timestamp`: ISO timestamp of the response
+
+**Validation Object:**
+- `isValid`: `true` if content is valid, `false` if issues detected
+- `hasBlocker`: `true` if cookie wall or paywall detected
+- `issues`: Array of detected issues (cookie walls, paywalls, etc.)
+- `quality`: Quality metrics (title, content, description validity)
 
 **Error Response (4xx/5xx):**
 
@@ -131,7 +187,10 @@ Monitors service health and Redis connection status.
 # Test health endpoint
 curl https://your-app.vercel.app/api/health
 
-# Extract article content
+# Extract article content (GET method - simple and easy)
+curl "https://your-app.vercel.app/api?key=your_secret_key&url=https://example.com/article"
+
+# Extract article content (POST method - recommended for long URLs)
 curl -X POST https://your-app.vercel.app/api \
   -H "Content-Type: application/json" \
   -d '{
@@ -144,7 +203,7 @@ curl -X POST https://your-app.vercel.app/api \
 
 ### Available Scripts
 
-- `npm run dev` - Start local development server
+- `vercel dev` - Start local development server
 - `npm run build` - Build the project (creates public directory for Vercel)
 - `npm run deploy` - Deploy to production
 - `npm run deploy:staging` - Deploy to staging
@@ -178,71 +237,208 @@ The project uses modern development tools:
 
 3. **Run locally:**
    ```bash
-   npm run dev
+   vercel dev
    ```
+
+## 📦 Dependencies
+
+### Production Dependencies
+
+| Package | Version | Status | Purpose |
+|---------|---------|--------|---------|
+| `@extractus/article-extractor` | ^8.0.20 | ✅ **Active** | Extracts article content, metadata, and structured data from HTML |
+| `@upstash/redis` | ^1.35.6 | ✅ **Active** | Serverless Redis client for caching with REST API |
+| `humanoid-js` | ^1.0.1 | ⚠️ **Deprecated** | Primary Cloudflare bypass (7 years old, but still functional) |
+| `impit` | ^0.6.0 | ✅ **Active** | HTTP client with browser impersonation for secondary bypass |
+
+### Development Dependencies
+
+| Package | Version | Status | Purpose |
+|---------|---------|--------|---------|
+| `eslint` | ^9.38.0 | ✅ **Active** | Code linting with flat config support |
+| `globals` | ^16.4.0 | ✅ **Active** | ESLint global variables for Node.js v24 compatibility |
+| `prettier` | ^3.6.2 | ✅ **Active** | Code formatting |
+
+### 📝 Dependency Notes
+
+**humanoid-js (⚠️ Unmaintained)**
+- Last updated: 7 years ago (2018)
+- Status: Works for basic-medium Cloudflare protection
+- Why we keep it: Simple, lightweight, no browser needed
+- Fallback: `impit` automatically used if humanoid-js fails
+- Future: Will replace when it stops working or better alternatives emerge
+
+**Why This Approach Works:**
+- ✅ Two bypass strategies provide redundancy
+- ✅ Automatic fallback ensures reliability
+- ✅ All dependencies work on Vercel free tier
+- ✅ No browser automation needed (keeps function size <50MB)
+- ✅ Total package size: ~15MB (well under 50MB limit)
+
+### 🔄 Update Strategy
+
+```bash
+# Update all dependencies (safe - follows semver)
+npm update
+
+# Check for outdated packages
+npm outdated
+
+# Rebuild native modules after Node.js upgrade
+npm rebuild
+```
+
+## 🏗️ Architecture
+
+### Data Flow
+
+```
+Request → Validate Key & URL
+    ↓
+Check Redis Cache
+    ↓
+Cache Hit? → Return Cached Article ✅
+    ↓
+Cache Miss? → Fetch with Bypass Strategy
+    ↓
+Try humanoid-js → Success? → Extract & Cache → Return ✅
+    ↓
+Failed? → Try impit → Success? → Extract & Cache → Return ✅
+    ↓
+Failed? → Return Error ❌
+```
+
+### Bypass Strategy Logic
+
+```javascript
+// Automatic fallback system
+1. Try humanoid-js (fast, lightweight)
+   ↓ Success → Cache & Return
+   ↓ Fail
+2. Try impit (browser impersonation)
+   ↓ Success → Cache & Return
+   ↓ Fail
+3. Return error with details
+```
+
+### Content Validation Flow
+
+```
+Extract Article → Validate Content
+    ↓
+Check for:
+- Cookie walls (40+ confidence threshold)
+- Paywalls (30+ confidence threshold)  
+- Short content (< 200 chars)
+- Missing title (< 10 chars)
+    ↓
+Return validation object with:
+- isValid: boolean
+- hasBlocker: boolean
+- issues: array
+- quality: metrics
+```
+
+## 🎯 Use Cases
+
+### ✅ **What This API Is Great For:**
+- 📰 News aggregators
+- 📱 RSS feed readers
+- 🔖 Bookmark managers with content preview
+- 📊 Content analysis tools
+- 🤖 Research bots
+- 📚 Article archiving services
+- 🔍 Content discovery platforms
+
+### ⚠️ **Limitations:**
+- **Cookie Walls**: Detects but cannot automatically accept (requires browser automation)
+- **Paywalls**: Detects but cannot bypass (premium content protected)
+- **JavaScript-heavy sites**: May return incomplete content
+- **Rate limiting**: Subject to target site's rate limits
+- **Dynamic content**: May miss content loaded via AJAX after initial render
+
+### 💡 **Best Practices:**
+- Cache aggressively (10-day default is reasonable for most content)
+- Handle `validation.hasBlocker` in your client code
+- Monitor `strategy` field to track bypass success rates
+- Use POST for long URLs (avoid URL length limits)
+- Implement retry logic with exponential backoff
+- Check `cached` field to understand performance
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable                   | Description                      | Required | Default     |
-| -------------------------- | -------------------------------- | -------- | ----------- |
-| `UPSTASH_REDIS_REST_TOKEN` | Your Upstash Redis token         | ✅       | -           |
-| `UPSTASH_REDIS_REST_URL`   | Your Upstash Redis URL           | ✅       | -           |
-| `SECRET_KEY`               | Comma-separated secret keys      | ✅       | -           |
-| `REDIS_CACHE_DAYS`         | Cache duration in days           | ❌       | 10          |
-| `NODE_ENV`                 | Environment (production/staging) | ❌       | development |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `UPSTASH_REDIS_REST_TOKEN` | ✅ Yes | - | Your Upstash Redis REST token |
+| `UPSTASH_REDIS_REST_URL` | ✅ Yes | - | Your Upstash Redis REST URL (https://...) |
+| `SECRET_KEY` | ✅ Yes | - | Comma-separated API keys for authentication |
+| `REDIS_CACHE_DAYS` | ❌ No | `10` | Cache duration in days (recommend 10-30) |
+| `NODE_ENV` | ❌ No | `development` | Environment (`development`, `production`) |
 
-### Redis Cache Settings
+### Example Configuration
 
-- **Default Cache Duration**: 10 days (configurable)
-- **Cache Key**: SHA1 hash of the URL for efficient storage
-- **Storage**: Hash-based storage for optimal performance
-- **TTL**: Automatic expiration based on configuration
+**`.env.local` for local development:**
+```bash
+UPSTASH_REDIS_REST_TOKEN=xxxx...
+UPSTASH_REDIS_REST_URL=https://frank-lizard-12345.upstash.io
+SECRET_KEY=my_dev_key_123,another_key_456
+REDIS_CACHE_DAYS=10
+NODE_ENV=development
+```
 
-### Performance Optimizations
+**Vercel Environment Variables:**
+1. Go to your Vercel project → Settings → Environment Variables
+2. Add each variable for Production, Preview, and Development
+3. Vercel will automatically inject them during deployment
 
-- **Function Timeout**: 30 seconds for main API, 10 seconds for health check
-- **Caching Strategy**: Redis hash storage with configurable TTL
-- **Error Handling**: Graceful degradation with user-friendly messages
-- **Memory Management**: Optimized for Node.js v22 performance
+### Cache Configuration Recommendations
 
-## 🌟 Node.js v22 Compatibility
-
-This project is fully optimized for Node.js v22 and includes:
-
-- **ES2022 Features**: Modern JavaScript syntax and features
-- **Performance Optimizations**: Leverages Node.js v22 improvements
-- **Memory Management**: Efficient memory handling for serverless environments
-- **Async Operations**: Optimized for Node.js v22 async performance
-
-## 📊 Performance Characteristics
-
-- **Response Time**: 500ms - 2s for new articles (depending on target site)
-- **Cache Hit**: Sub-100ms for cached articles
-- **Scalability**: Automatic scaling with Vercel's infrastructure
-- **Reliability**: 99.9%+ uptime with Vercel's global edge network
-- **Memory Usage**: Optimized for serverless function constraints
-
-## 🔒 Security Features
-
-- **Secret Key Authentication**: Required for all API calls
-- **Input Validation**: Comprehensive request validation and sanitization
-- **Error Sanitization**: Production-safe error messages
-- **CORS Protection**: Configurable cross-origin policies
-- **Rate Limiting**: Built-in protection against abuse
-- **Redis Security**: Secure connection handling with Upstash
+| Content Type | Recommended TTL | Setting |
+|--------------|----------------|---------|
+| News articles | 1-3 days | `REDIS_CACHE_DAYS=1` |
+| Blog posts | 7-14 days | `REDIS_CACHE_DAYS=7` |
+| Static content | 30+ days | `REDIS_CACHE_DAYS=30` |
+| **General use (default)** | **10 days** | `REDIS_CACHE_DAYS=10` |
 
 ## 🚀 Deployment
 
-The project is configured for seamless Vercel deployment:
+### Deploy to Vercel
 
-- **Automatic Build**: Creates required public directory
-- **Function Configuration**: Optimized timeout and memory settings
-- **Environment Management**: Easy environment variable configuration
-- **Zero-Config**: Works out of the box with Vercel
+**Quick Deploy:**
+```bash
+# Production deployment
+npm run deploy
 
-To deploy, simply run `npm run deploy` for production or `npm run deploy:staging` for staging.
+# Staging deployment
+npm run deploy:staging
+```
+
+**First-time Setup:**
+1. Install Vercel CLI: `npm i -g vercel`
+2. Link project: `vercel link`
+3. Add environment variables in Vercel dashboard
+4. Deploy: `npm run deploy`
+
+## 🧪 Testing
+
+### Automated Tests
+
+The project includes 7 automated validation checks:
+
+```bash
+npm test
+```
+
+**What's tested:**
+1. ✅ Project structure (all required files exist)
+2. ✅ Code quality (ESLint passes)
+3. ✅ Package scripts (deploy, test, lint, etc.)
+4. ✅ Dependencies (all installed correctly)
+5. ✅ Node.js compatibility (v18+)
+6. ✅ Module exports (fetcher functions work)
+7. ✅ Environment template (all variables documented)
 
 ## 🤝 Contributing
 
@@ -261,27 +457,17 @@ We welcome contributions! Please follow these steps:
 - Write meaningful commit messages
 - Test your changes locally before submitting
 - Ensure all tests pass (`npm test`)
+- Update README if adding new features
+- Keep dependencies up to date
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- [Humanoid-js](https://github.com/evyatarmeged/Humanoid) - Anti-bot detection bypass
-- [article-extractor](https://github.com/extractus/article-extractor) - Content extraction
-- [Upstash Redis](https://upstash.com/) - Serverless Redis
-- [Vercel](https://vercel.com/) - Serverless deployment platform
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/davodm/article-export/issues) page
-2. Create a new issue with detailed information
-3. Include your Node.js version and environment details
-4. Check the deployment scripts in package.json for deployment options
-
 ---
 
 **Made with ❤️ by Davod Mozafari**
+
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black.svg)](https://vercel.com/)

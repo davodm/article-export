@@ -1,6 +1,6 @@
 {
   "name": "article-export",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Simple serverless app to export article data from an URL with ability to bypass cloudflare anti-bot measures",
   "main": "api/index.js",
   "type": "module",
@@ -8,9 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "vercel dev",
     "build": "echo 'Serverless API build completed' && mkdir -p public && echo 'API ready' > public/index.html",
-    "start": "vercel dev",
     "deploy": "vercel --prod",
     "deploy:staging": "vercel",
     "test": "node test.js",
@@ -23,6 +21,7 @@
     "serverless",
     "vercel",
     "humanoid",
+    "impit",
     "anti-bot",
     "cloudflare-bypass",
     "content-parsing"
@@ -30,14 +29,15 @@
   "author": "Davod Mozafari",
   "license": "MIT",
   "dependencies": {
-    "@extractus/article-extractor": "^8.0.19",
-    "@upstash/redis": "^1.35.3",
-    "humanoid-js": "^1.0.1"
+    "@extractus/article-extractor": "^8.0.20",
+    "@upstash/redis": "^1.35.6",
+    "humanoid-js": "^1.0.1",
+    "impit": "^0.6.0"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
-    "prettier": "^3.2.5",
-    "vercel": "^33.5.6"
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2"
   },
   "repository": {
     "type": "git",
