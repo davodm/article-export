@@ -1,6 +1,6 @@
 {
   "name": "article-export",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Simple serverless app to export article data from an URL with ability to bypass cloudflare anti-bot measures",
   "main": "api/index.js",
   "type": "module",
@@ -30,14 +30,14 @@
   "license": "MIT",
   "dependencies": {
     "@extractus/article-extractor": "^8.0.20",
-    "@upstash/redis": "^1.35.6",
+    "@upstash/redis": "^1.35.7",
     "humanoid-js": "^1.0.1",
-    "impit": "^0.6.0"
+    "impit": "^0.7.4"
   },
   "devDependencies": {
-    "eslint": "^9.38.0",
-    "globals": "^16.4.0",
-    "prettier": "^3.6.2"
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4"
   },
   "repository": {
     "type": "git",
