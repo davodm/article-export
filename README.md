@@ -421,6 +421,65 @@ npm run deploy:staging
 3. Add environment variables in Vercel dashboard
 4. Deploy: `npm run deploy`
 
+### Keep-Alive Configuration
+
+Serverless functions can go "cold" after inactivity. To keep your function and Upstash Redis connection active, we've configured a daily cron job that pings the health endpoint.
+
+**Built-in Solution (Vercel Cron Jobs):**
+- ✅ Already configured in `vercel.json`
+- ✅ Runs daily at 12:00 UTC
+- ✅ Free on Vercel Pro plan (or use alternatives below)
+- ✅ No external dependencies
+
+The cron job is configured to call `/api/health` once per day, which:
+- Keeps the serverless function warm
+- Tests Redis connectivity
+- Ensures the database stays active
+
+**Alternative Free Solutions:**
+
+If you're on Vercel's free tier (which doesn't include cron jobs), use one of these free external services:
+
+1. **UptimeRobot** (Recommended - Free tier: 50 monitors)
+   - URL: https://uptimerobot.com
+   - Setup: Create a monitor → HTTP(s) → Your health endpoint URL
+   - Interval: Set to check every 24 hours (or minimum 5 minutes)
+   - Free tier: 50 monitors, 5-minute intervals
+
+2. **Cron-Job.org** (Free)
+   - URL: https://cron-job.org
+   - Setup: Create job → HTTP Request → Your health endpoint URL
+   - Schedule: `0 12 * * *` (daily at 12:00 UTC)
+   - Free tier: Unlimited jobs, 1-minute minimum interval
+
+3. **EasyCron** (Free tier available)
+   - URL: https://www.easycron.com
+   - Setup: Create cron job → HTTP GET → Your health endpoint URL
+   - Schedule: Daily
+   - Free tier: 1 job, 1-hour minimum interval
+
+4. **GitHub Actions** (If your repo is public)
+   - Create `.github/workflows/keep-alive.yml`:
+   ```yaml
+   name: Keep Alive
+   on:
+     schedule:
+       - cron: '0 12 * * *'  # Daily at 12:00 UTC
+   jobs:
+     ping:
+       runs-on: ubuntu-latest
+       steps:
+         - name: Ping health endpoint
+           run: curl -f ${{ secrets.HEALTH_ENDPOINT_URL }} || exit 1
+   ```
+
+**Health Endpoint URL:**
+```
+https://your-app.vercel.app/api/health
+```
+
+Replace `your-app` with your actual Vercel deployment URL.
+
 ## 🧪 Testing
 
 ### Automated Tests
