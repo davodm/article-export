@@ -112,8 +112,17 @@ async function extractArticleData(html, url) {
 async function cacheArticleData(redis, hash, article, cacheDays) {
   const cacheSeconds = 3600 * 24 * parseInt(cacheDays || 10);
 
+  // Convert article object to string-serializable format for Redis hash
+  // Upstash Redis hset accepts objects directly, but we ensure all values are strings
+  const articleData = {};
+  for (const [key, value] of Object.entries(article)) {
+    if (value !== null && value !== undefined) {
+      articleData[key] = typeof value === 'string' ? value : String(value);
+    }
+  }
+
   const pipeline = redis.pipeline();
-  await pipeline.hmset(hash, article).expire(hash, cacheSeconds).exec();
+  await pipeline.hset(hash, articleData).expire(hash, cacheSeconds).exec();
 }
 
 /**
